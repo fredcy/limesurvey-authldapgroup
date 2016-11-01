@@ -1,10 +1,10 @@
 <?php
-class AuthLDAP extends ls\pluginmanager\AuthPluginBase
+class IMSALDAP extends ls\pluginmanager\AuthPluginBase
 {
     protected $storage = 'DbStorage';
 
-    static protected $description = 'Core: LDAP authentication';
-    static protected $name = 'LDAP';
+    static protected $description = 'IMSA: LDAP authentication';
+    static protected $name = 'IMSALDAP';
 
     /**
      * Can we autocreate users? For the moment this is disabled, will be moved
@@ -383,7 +383,7 @@ class AuthLDAP extends ls\pluginmanager\AuthPluginBase
     {
         // Do nothing if this user is not AuthLDAP type
         $identity = $this->getEvent()->get('identity');
-        if ($identity->plugin != 'AuthLDAP')
+        if ($identity->plugin != 'IMSALDAP')
         {
             return;
         }
