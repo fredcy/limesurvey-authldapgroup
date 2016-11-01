@@ -99,6 +99,16 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
         'automaticsurveycreation' => array(
                 'type' => 'checkbox',
                 'label' => 'Grant survey creation permission to automatically created users'
+        	),
+        'groupsearchbase' => array(
+                'type' => 'string',
+                'label' => 'Optional base DN for group restriction',
+                'help' => 'E.g., ou=Groups,dc=example,dc=com'
+                ),
+        'groupsearchfilter' => array(
+                'type' => 'string',
+                'label' => 'Optional filter for group restriction',
+                'help' => 'Required if group search base set. E.g. (&(cn=limesurvey)(memberUid=$username))'
                 )
     );
 
@@ -434,6 +444,8 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
         $usersearchbase		= $this->get('usersearchbase');
         $binddn     		= $this->get('binddn');
         $bindpwd     		= $this->get('bindpwd');
+        $groupsearchbase        = $this->get('groupsearchbase');
+        $groupsearchfilter      = $this->get('groupsearchfilter');
 
         // Try to connect
         $ldapconn = $this->createConnection();
@@ -494,16 +506,19 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
                 return;
             }
 
-            // test required group membership
-            $groupsearchbase = "ou=Groups,dc=imsa,dc=edu";
-            $groupsearchfilter = "(&(cn=wwwlimesurvey)(memberUid=$username))";
-            $groupsearchres = ldap_search($ldapconn, $groupsearchbase, $groupsearchfilter);
-            $grouprescount = ldap_count_entries($ldapconn, $groupsearchres);
-            if ($grouprescount != 1) {
-                $this->setAuthFailure(self::ERROR_USERNAME_INVALID,
-                gT('Valid username but not authorized for limesurvey'));
-                ldap_close($ldapconn); // all done? close connection
-                return;
+            // If specifed, check group membership
+            if ($groupsearchbase != '' && $groupsearchfilter != '')
+            {
+                $filter = str_replace('$username', $username, $groupsearchfilter);
+                $groupsearchres = ldap_search($ldapconn, $groupsearchbase, $filter);
+                $grouprescount = ldap_count_entries($ldapconn, $groupsearchres);
+                if ($grouprescount < 1)
+                {
+                    $this->setAuthFailure(self::ERROR_USERNAME_INVALID,
+                    gT('Valid username but not authorized by group restriction'));
+                    ldap_close($ldapconn); // all done? close connection
+                    return;
+                }
             }
 
             // binding to ldap server with the userDN and privided credentials
