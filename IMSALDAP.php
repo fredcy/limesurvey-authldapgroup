@@ -4,7 +4,7 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
     protected $storage = 'DbStorage';
 
     static protected $description = 'IMSA: LDAP authentication';
-    static protected $name = 'IMSALDAP';
+    static protected $name = 'IMSA LDAP';
 
     /**
      * Can we autocreate users? For the moment this is disabled, will be moved
@@ -490,6 +490,18 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
                 // if no entry or more than one entry returned
                 // then deny authentication
                 $this->setAuthFailure(self::ERROR_USERNAME_INVALID);
+                ldap_close($ldapconn); // all done? close connection
+                return;
+            }
+
+            // test required group membership
+            $groupsearchbase = "ou=Groups,dc=imsa,dc=edu";
+            $groupsearchfilter = "(&(cn=wwwlimesurvey)(memberUid=$username))";
+            $groupsearchres = ldap_search($ldapconn, $groupsearchbase, $groupsearchfilter);
+            $grouprescount = ldap_count_entries($ldapconn, $groupsearchres);
+            if ($grouprescount != 1) {
+                $this->setAuthFailure(self::ERROR_USERNAME_INVALID,
+                gT('Valid username but not authorized for limesurvey'));
                 ldap_close($ldapconn); // all done? close connection
                 return;
             }
