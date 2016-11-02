@@ -1,10 +1,10 @@
 <?php
-class IMSALDAP extends ls\pluginmanager\AuthPluginBase
+class AuthLDAPGroup extends ls\pluginmanager\AuthPluginBase
 {
     protected $storage = 'DbStorage';
 
-    static protected $description = 'IMSA: LDAP authentication';
-    static protected $name = 'IMSA LDAP';
+    static protected $description = 'LDAP authentication and authorization';
+    static protected $name = 'LDAP Group';
 
     /**
      * Can we autocreate users? For the moment this is disabled, will be moved
@@ -15,6 +15,10 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
     protected $autoCreate = false;
 
     protected $settings = array(
+        'info' => array(
+            'type' => 'info',
+            'content' => "This plugin provides the core LDAP authentication plus an optional authorization check. Typically that check is to verify that the user's account is a member of a particular LDAP group."
+        ),
         'server' => array(
             'type' => 'string',
             'label' => 'Ldap server',
@@ -393,7 +397,7 @@ class IMSALDAP extends ls\pluginmanager\AuthPluginBase
     {
         // Do nothing if this user is not AuthLDAP type
         $identity = $this->getEvent()->get('identity');
-        if ($identity->plugin != 'IMSALDAP')
+        if ($identity->plugin != 'AuthLDAPGroup')
         {
             return;
         }
